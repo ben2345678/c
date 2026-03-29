@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vitrine éleveur — BudgiBook</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .breeder-hero {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      color: #fff;
+      padding: 3rem 2rem;
+    }
+    .breeder-hero-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .breeder-hero-avatar {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 4px solid rgba(255,255,255,.3);
+      background: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .breeder-hero-info h1 { font-size: 2rem; margin-bottom: .25rem; }
+    .breeder-hero-info .region { opacity: .85; font-size: 1rem; }
+    .contact-item { display: flex; align-items: center; gap: .5rem; font-size: .9rem; opacity: .9; }
+  </style>
+</head>
+<body>
+
+<!-- ── En-tête public ─────────────────────────────────────────────────── -->
+<header class="public-header">
+  <a class="logo" href="/">🐦 BudgiBook</a>
+  <nav>
+    <a href="/annuaire" style="color:rgba(255,255,255,.85)">Annuaire</a>
+    <a href="/" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.5)">Se connecter</a>
+  </nav>
+</header>
+
+<!-- ── AdSense bannière ───────────────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;padding:1rem 2rem 0">
+  <!-- Google AdSense -->
+  <div class="adsense-banner">Emplacement publicitaire — Google AdSense (728×90)</div>
+</div>
+
+<!-- ── Hero vitrine ───────────────────────────────────────────────────── -->
+<div class="breeder-hero" id="breeder-hero" style="display:none">
+  <div class="breeder-hero-inner">
+    <div class="breeder-hero-avatar" id="hero-avatar">?</div>
+    <div class="breeder-hero-info">
+      <h1 id="hero-name">Élevage</h1>
+      <div class="region" id="hero-region"></div>
+      <p id="hero-description" style="margin-top:.75rem;max-width:600px;opacity:.85;font-size:.95rem;line-height:1.6"></p>
+      <div style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem" id="hero-contacts"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Contenu principal ──────────────────────────────────────────────── -->
+<div class="home-layout">
+  <main>
+    <div id="birds-section">
+      <h2 style="margin-bottom:1.5rem;color:var(--primary-dark)">🦜 Oiseaux reproducteurs</h2>
+      <div class="birds-grid" id="birds-grid">
+        <div class="empty-state" style="grid-column:1/-1"><div class="empty-state-icon">🦜</div><p>Chargement...</p></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Sidebar publicité -->
+  <aside>
+    <!-- Google AdSense -->
+    <div class="adsense-sidebar">Emplacement publicitaire — Google AdSense (300×250)</div>
+    <br>
+    <!-- Google AdSense -->
+    <div class="adsense-sidebar" style="margin-top:1rem">Emplacement publicitaire — Google AdSense (300×600)</div>
+  </aside>
+</div>
+
+<!-- ── AdSense footer ─────────────────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;padding:0 2rem">
+  <!-- Google AdSense -->
+  <div class="adsense-banner">Emplacement publicitaire — Google AdSense (728×90)</div>
+</div>
+
+<footer class="public-footer">
+  <p>© 2025 BudgiBook — <a href="/annuaire" style="color:rgba(255,255,255,.6)">Retour à l'annuaire</a></p>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+(async () => {
+  // Extraire l'ID depuis l'URL (/eleveur/:id)
+  const parts = window.location.pathname.split('/');
+  const id = parts[parts.length - 1];
+
+  if (!id) { window.location.href = '/annuaire'; return; }
+
+  try {
+    const { breeder, birds } = await api('GET', `/api/public/breeders/${id}`);
+
+    // Mettre à jour le titre de la page
+    document.title = `${breeder.farm_name || 'Éleveur'} — BudgiBook`;
+
+    // Hero
+    const hero = document.getElementById('breeder-hero');
+    hero.style.display = '';
+
+    const avatarEl = document.getElementById('hero-avatar');
+    if (breeder.profile_photo) {
+      avatarEl.style.background = 'none';
+      avatarEl.innerHTML = `<img src="${breeder.profile_photo}" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
+    } else {
+      avatarEl.textContent = (breeder.farm_name || '?')[0].toUpperCase();
+    }
+
+    document.getElementById('hero-name').textContent = breeder.farm_name || 'Éleveur #' + id;
+    if (breeder.region) {
+      document.getElementById('hero-region').innerHTML = `📍 ${breeder.region}`;
+    }
+    if (breeder.description) {
+      document.getElementById('hero-description').textContent = breeder.description;
+    }
+
+    // Contacts
+    const contactsEl = document.getElementById('hero-contacts');
+    if (breeder.contact_email) {
+      contactsEl.innerHTML += `<a href="mailto:${breeder.contact_email}" class="contact-item" style="color:#fff">✉️ ${breeder.contact_email}</a>`;
+    }
+    if (breeder.contact_phone) {
+      contactsEl.innerHTML += `<a href="tel:${breeder.contact_phone}" class="contact-item" style="color:#fff">📞 ${breeder.contact_phone}</a>`;
+    }
+    if (breeder.contact_social) {
+      contactsEl.innerHTML += `<a href="${breeder.contact_social}" target="_blank" rel="noopener" class="contact-item" style="color:#fff">🔗 Réseaux / site web</a>`;
+    }
+
+    // Oiseaux
+    const grid = document.getElementById('birds-grid');
+    if (!birds.length) {
+      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-state-icon">🦜</div>
+        <p>Cet éleveur n'a pas encore d'oiseaux publics.</p>
+      </div>`;
+    } else {
+      grid.innerHTML = birds.map(b => {
+        const photo = b.photo
+          ? `<img src="${b.photo}" alt="${b.name}">`
+          : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:3rem;background:var(--surface-2)">🦜</div>`;
+
+        const sexMap = { male: '♂ Mâle', female: '♀ Femelle', unknown: 'Indéterminé' };
+
+        return `
+          <div class="bird-card">
+            <div class="bird-card-photo">${photo}</div>
+            <div class="bird-card-body">
+              <div class="bird-card-name">${b.name}</div>
+              <div class="bird-card-info">${sexBadge(b.sex)}</div>
+              ${b.mutation ? `<div style="font-size:.8rem;color:var(--text-muted)">${b.mutation}</div>` : ''}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+  } catch (err) {
+    document.body.innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:1rem">
+        <div style="font-size:3rem">😕</div>
+        <h2>Éleveur introuvable</h2>
+        <p style="color:var(--text-muted)">Cet éleveur n'existe pas ou sa page n'est plus disponible.</p>
+        <a href="/annuaire" class="btn btn-primary">Retour à l'annuaire</a>
+      </div>`;
+  }
+})();
+</script>
+</body>
+</html>

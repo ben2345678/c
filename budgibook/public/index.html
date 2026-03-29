@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BudgiBook — Suivi d'élevage de perruches ondulées</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <meta name="description" content="BudgiBook est l'outil en ligne de gestion et de suivi d'élevage de perruches ondulées : fiches oiseaux, pedigrees, accouplements, nichées et vitrine publique.">
+</head>
+<body>
+
+<!-- ── En-tête public ─────────────────────────────────────────────────── -->
+<header class="public-header">
+  <div class="logo">🐦 BudgiBook</div>
+  <nav>
+    <a href="/annuaire">Annuaire des éleveurs</a>
+    <a href="#" id="btn-login-nav" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.5)">Se connecter</a>
+    <a href="#" id="btn-register-nav" class="btn btn-accent btn-sm">Créer un compte</a>
+  </nav>
+</header>
+
+<!-- ── AdSense — bannière header ──────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;padding:0 2rem">
+  <!-- Google AdSense -->
+  <div class="adsense-banner">Emplacement publicitaire — Google AdSense (728×90)</div>
+</div>
+
+<!-- ── Section Hero ───────────────────────────────────────────────────── -->
+<section class="hero">
+  <h1>🐦 BudgiBook</h1>
+  <p>L'outil en ligne de gestion d'élevage de perruches ondulées. Suivez vos oiseaux, leurs pedigrees, vos accouplements et partagez votre vitrine.</p>
+  <div class="hero-btns">
+    <a href="#" class="hero-btn-primary" id="btn-register-hero">Créer mon espace gratuitement</a>
+    <a href="/annuaire" class="hero-btn-outline">Voir l'annuaire des éleveurs</a>
+  </div>
+</section>
+
+<!-- ── Layout principal home ──────────────────────────────────────────── -->
+<div class="home-layout">
+  <!-- Contenu principal -->
+  <main>
+    <!-- Fonctionnalités -->
+    <section class="features" style="padding:2rem 0">
+      <h2>Tout ce dont vous avez besoin</h2>
+      <div class="features-grid">
+        <div class="feature-item">
+          <div class="feature-icon">🦜</div>
+          <h3>Fiches oiseaux</h3>
+          <p>Enregistrez chaque oiseau avec photo, mutation, bague, statut et informations génétiques.</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🌳</div>
+          <h3>Arbre généalogique</h3>
+          <p>Visualisez le pedigree sur 3 générations en un coup d'œil grâce à un rendu graphique clair.</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🥚</div>
+          <h3>Nichées & accouplements</h3>
+          <p>Gérez vos couples reproducteurs, suivez les nichées (ponte, éclosion, envol).</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">🏡</div>
+          <h3>Vitrine publique</h3>
+          <p>Partagez votre élevage avec le monde : photo, description, coordonnées et oiseaux à présenter.</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">📋</div>
+          <h3>Annuaire des éleveurs</h3>
+          <p>Retrouvez d'autres éleveurs par région et consultez leurs vitrines.</p>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon">💾</div>
+          <h3>Export de vos données</h3>
+          <p>Exportez toutes vos données en JSON à tout moment, depuis vos paramètres.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sidebar publicité -->
+  <aside>
+    <!-- Google AdSense -->
+    <div class="adsense-sidebar">Emplacement publicitaire — Google AdSense (300×250)</div>
+    <br>
+    <!-- Google AdSense -->
+    <div class="adsense-sidebar" style="margin-top:1rem">Emplacement publicitaire — Google AdSense (300×600)</div>
+  </aside>
+</div>
+
+<!-- ── AdSense — bannière footer ──────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;padding:0 2rem">
+  <!-- Google AdSense -->
+  <div class="adsense-banner">Emplacement publicitaire — Google AdSense (728×90)</div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────── -->
+<footer class="public-footer">
+  <p>© 2025 BudgiBook — Outil de suivi d'élevage de perruches ondulées</p>
+</footer>
+
+<!-- ── Modale d'authentification ──────────────────────────────────────── -->
+<div class="modal-overlay" id="auth-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="auth-modal-title">Connexion</h2>
+      <button class="modal-close" onclick="closeModal('auth-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Se connecter</div>
+        <div class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Créer un compte</div>
+      </div>
+
+      <!-- Formulaire connexion -->
+      <form id="form-login">
+        <div class="form-group">
+          <label for="login-email">Adresse email</label>
+          <input type="email" id="login-email" class="form-control" required placeholder="mon@email.fr">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Mot de passe</label>
+          <input type="password" id="login-password" class="form-control" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">Se connecter</button>
+      </form>
+
+      <!-- Formulaire inscription -->
+      <form id="form-register" style="display:none">
+        <div class="form-group">
+          <label for="reg-email">Adresse email</label>
+          <input type="email" id="reg-email" class="form-control" required placeholder="mon@email.fr">
+        </div>
+        <div class="form-group">
+          <label for="reg-farm">Nom de l'élevage <span>(optionnel)</span></label>
+          <input type="text" id="reg-farm" class="form-control" placeholder="Ex : Élevage du Soleil Vert">
+        </div>
+        <div class="form-group">
+          <label for="reg-region">Région <span>(optionnel)</span></label>
+          <input type="text" id="reg-region" class="form-control" placeholder="Ex : Occitanie">
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Mot de passe</label>
+          <input type="password" id="reg-password" class="form-control" required placeholder="Minimum 6 caractères">
+        </div>
+        <div class="form-group">
+          <label for="reg-password2">Confirmer le mot de passe</label>
+          <input type="password" id="reg-password2" class="form-control" required placeholder="••••••••">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%">Créer mon compte</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script>
+  // Rediriger si déjà connecté
+  (async () => {
+    try {
+      const data = await api('GET', '/api/auth/me');
+      if (data.user) {
+        window.location.href = data.user.role === 'admin' ? '/admin' : '/tableau-de-bord';
+      }
+    } catch {}
+  })();
+
+  // Boutons d'ouverture de modale
+  document.getElementById('btn-login-nav').onclick    = e => { e.preventDefault(); switchAuthTab('login');    openModal('auth-modal'); };
+  document.getElementById('btn-register-nav').onclick  = e => { e.preventDefault(); switchAuthTab('register'); openModal('auth-modal'); };
+  document.getElementById('btn-register-hero').onclick = e => { e.preventDefault(); switchAuthTab('register'); openModal('auth-modal'); };
+
+  function switchAuthTab(tab) {
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+    document.getElementById('form-login').style.display    = tab === 'login'    ? '' : 'none';
+    document.getElementById('form-register').style.display = tab === 'register' ? '' : 'none';
+    document.getElementById('auth-modal-title').textContent = tab === 'login' ? 'Connexion' : 'Créer un compte';
+  }
+
+  // Connexion
+  document.getElementById('form-login').onsubmit = async e => {
+    e.preventDefault();
+    const email    = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    try {
+      const data = await api('POST', '/api/auth/login', { email, password });
+      ToastManager.success('Connexion réussie !');
+      setTimeout(() => {
+        window.location.href = data.user.role === 'admin' ? '/admin' : '/tableau-de-bord';
+      }, 600);
+    } catch (err) {
+      ToastManager.error(err.message);
+    }
+  };
+
+  // Inscription
+  document.getElementById('form-register').onsubmit = async e => {
+    e.preventDefault();
+    const password  = document.getElementById('reg-password').value;
+    const password2 = document.getElementById('reg-password2').value;
+    if (password !== password2) { ToastManager.error('Les mots de passe ne correspondent pas.'); return; }
+
+    try {
+      const data = await api('POST', '/api/auth/register', {
+        email:     document.getElementById('reg-email').value,
+        password,
+        farm_name: document.getElementById('reg-farm').value,
+        region:    document.getElementById('reg-region').value
+      });
+      ToastManager.success('Compte créé avec succès !');
+      setTimeout(() => window.location.href = '/tableau-de-bord', 600);
+    } catch (err) {
+      ToastManager.error(err.message);
+    }
+  };
+</script>
+</body>
+</html>

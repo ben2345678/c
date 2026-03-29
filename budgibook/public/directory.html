@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Annuaire des éleveurs — BudgiBook</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- ── En-tête public ─────────────────────────────────────────────────── -->
+<header class="public-header">
+  <a class="logo" href="/">🐦 BudgiBook</a>
+  <nav>
+    <a href="/annuaire" style="color:#fff;font-weight:700">Annuaire</a>
+    <a href="/" id="btn-login-header" class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.5)">Se connecter</a>
+  </nav>
+</header>
+
+<!-- ── AdSense bannière ───────────────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;padding:1rem 2rem 0">
+  <!-- Google AdSense -->
+  <div class="adsense-banner">Emplacement publicitaire — Google AdSense (728×90)</div>
+</div>
+
+<div class="home-layout" style="margin-top:1.5rem">
+  <!-- Contenu principal -->
+  <main>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem">
+      <h1 style="color:var(--primary-dark)">📋 Annuaire des éleveurs</h1>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+        <input type="text" class="filter-input" id="filter-name" placeholder="🔍 Rechercher...">
+        <select class="filter-input" id="filter-region">
+          <option value="">Toutes les régions</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="breeders-count" style="color:var(--text-muted);font-size:.875rem;margin-bottom:1rem"></div>
+
+    <div class="breeders-grid" id="breeders-grid">
+      <div class="empty-state"><div class="empty-state-icon">👥</div><p>Chargement...</p></div>
+    </div>
+  </main>
+
+  <!-- Sidebar publicité -->
+  <aside>
+    <!-- Google AdSense -->
+    <div class="adsense-sidebar">Emplacement publicitaire — Google AdSense (300×250)</div>
+    <br>
+    <!-- Google AdSense -->
+    <div class="adsense-sidebar" style="margin-top:1rem">Emplacement publicitaire — Google AdSense (300×600)</div>
+  </aside>
+</div>
+
+<!-- ── AdSense footer ─────────────────────────────────────────────────── -->
+<div style="max-width:1200px;margin:0 auto;padding:0 2rem">
+  <!-- Google AdSense -->
+  <div class="adsense-banner">Emplacement publicitaire — Google AdSense (728×90)</div>
+</div>
+
+<footer class="public-footer">
+  <p>© 2025 BudgiBook — <a href="/" style="color:rgba(255,255,255,.6)">Accueil</a></p>
+</footer>
+
+<script src="/js/app.js"></script>
+<script>
+let allBreeders = [];
+
+// Rediriger si connecté
+(async () => {
+  try {
+    const data = await api('GET', '/api/auth/me');
+    if (data.user) {
+      document.getElementById('btn-login-header').textContent = 'Mon espace';
+      document.getElementById('btn-login-header').href = data.user.role === 'admin' ? '/admin' : '/tableau-de-bord';
+    }
+  } catch {}
+})();
+
+document.getElementById('btn-login-header').addEventListener('click', async e => {
+  try {
+    const data = await api('GET', '/api/auth/me');
+    if (!data.user) { window.location.href = '/'; }
+  } catch { window.location.href = '/'; }
+});
+
+(async () => {
+  // Charger les régions
+  try {
+    const { regions } = await api('GET', '/api/public/regions');
+    const select = document.getElementById('filter-region');
+    regions.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r;
+      opt.textContent = r;
+      select.appendChild(opt);
+    });
+  } catch {}
+
+  // Charger les éleveurs
+  await loadBreeders();
+
+  // Filtres
+  document.getElementById('filter-name').addEventListener('input', applyFilters);
+  document.getElementById('filter-region').addEventListener('change', applyFilters);
+})();
+
+async function loadBreeders() {
+  try {
+    const { breeders } = await api('GET', '/api/public/breeders');
+    allBreeders = breeders;
+    renderBreeders(breeders);
+  } catch (err) {
+    document.getElementById('breeders-grid').innerHTML = `<p style="color:var(--danger)">Erreur : ${err.message}</p>`;
+  }
+}
+
+function renderBreeders(breeders) {
+  const grid = document.getElementById('breeders-grid');
+  document.getElementById('breeders-count').textContent = `${breeders.length} éleveur(s)`;
+
+  if (!breeders.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-state-icon">🔍</div>
+      <p>Aucun éleveur trouvé.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = breeders.map(b => {
+    const initial = (b.farm_name || b.id)[0].toString().toUpperCase();
+    const avatarHTML = b.profile_photo
+      ? `<img src="${b.profile_photo}" class="breeder-avatar" alt="${b.farm_name}">`
+      : `<div class="breeder-avatar">${initial}</div>`;
+
+    return `
+      <a href="/eleveur/${b.id}" class="breeder-card" style="text-decoration:none;color:inherit">
+        <div class="breeder-card-header">
+          ${avatarHTML}
+          <div>
+            <h3 style="margin:0">${b.farm_name || 'Éleveur #' + b.id}</h3>
+            ${b.region ? `<div style="font-size:.8rem;color:var(--text-muted)">📍 ${b.region}</div>` : ''}
+          </div>
+        </div>
+        ${b.description ? `<p style="font-size:.875rem;color:var(--text-muted);line-height:1.5">${b.description.substring(0, 120)}${b.description.length > 120 ? '...' : ''}</p>` : ''}
+        <div style="font-size:.8rem;color:var(--text-muted);display:flex;align-items:center;gap:.5rem">
+          🦜 ${b.bird_count} oiseau(x) en vitrine
+          <span style="margin-left:auto;color:var(--primary);font-weight:600">Voir la vitrine →</span>
+        </div>
+      </a>`;
+  }).join('');
+}
+
+function applyFilters() {
+  const name   = document.getElementById('filter-name').value.toLowerCase();
+  const region = document.getElementById('filter-region').value;
+
+  const filtered = allBreeders.filter(b => {
+    if (name   && !(b.farm_name || '').toLowerCase().includes(name)) return false;
+    if (region && b.region !== region) return false;
+    return true;
+  });
+  renderBreeders(filtered);
+}
+</script>
+</body>
+</html>

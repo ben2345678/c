@@ -1,0 +1,6 @@
+node_modules/
+budgibook.db
+sessions.db
+*.db-shm
+*.db-wal
+.env

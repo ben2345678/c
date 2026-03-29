@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes oiseaux — BudgiBook</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <div class="app-content">
+    <div class="app-topbar">
+      <h1>🦜 Mes oiseaux</h1>
+      <div style="margin-left:auto;display:flex;gap:.5rem">
+        <button class="btn btn-ghost btn-sm" id="toggle-view" title="Changer de vue">⊞ Grille</button>
+        <button class="btn btn-primary" id="btn-add-bird">+ Ajouter un oiseau</button>
+      </div>
+    </div>
+
+    <!-- Filtres -->
+    <div class="filters-bar">
+      <input type="text" class="filter-input" id="filter-name" placeholder="🔍 Rechercher par nom...">
+      <select class="filter-input" id="filter-sex">
+        <option value="">Tous les sexes</option>
+        <option value="male">Mâle</option>
+        <option value="female">Femelle</option>
+        <option value="unknown">Indéterminé</option>
+      </select>
+      <select class="filter-input" id="filter-status">
+        <option value="">Tous les statuts</option>
+        <option value="active">Actif</option>
+        <option value="sold">Vendu</option>
+        <option value="given">Donné</option>
+        <option value="deceased">Décédé</option>
+      </select>
+      <input type="text" class="filter-input" id="filter-mutation" placeholder="Filtrer par mutation...">
+      <button class="btn btn-ghost btn-sm" id="btn-clear-filters">Effacer</button>
+    </div>
+
+    <!-- Contenu -->
+    <div id="birds-container">
+      <!-- Rempli par JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale ajout/édition oiseau ─────────────────────────────────────── -->
+<div class="modal-overlay" id="bird-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="bird-modal-title">Ajouter un oiseau</h2>
+      <button class="modal-close" onclick="closeModal('bird-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="bird-form">
+        <input type="hidden" id="bird-id">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bird-name">Nom *</label>
+            <input type="text" id="bird-name" class="form-control" required placeholder="Ex : Sunny">
+          </div>
+          <div class="form-group">
+            <label for="bird-ring">Numéro de bague <span>(optionnel)</span></label>
+            <input type="text" id="bird-ring" class="form-control" placeholder="Ex : 2024-FR-0042">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bird-sex">Sexe</label>
+            <select id="bird-sex" class="form-control">
+              <option value="unknown">Indéterminé</option>
+              <option value="male">Mâle</option>
+              <option value="female">Femelle</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="bird-birth">Date de naissance</label>
+            <input type="date" id="bird-birth" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bird-mutation">Mutation / couleur</label>
+            <input type="text" id="bird-mutation" class="form-control" placeholder="Ex : Lutino, Opaline bleu cobalt">
+          </div>
+          <div class="form-group">
+            <label for="bird-genetics">Génétique <span>(mutations portées)</span></label>
+            <input type="text" id="bird-genetics" class="form-control" placeholder="Ex : /Ino, /Opaline">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bird-father">Père <span>(optionnel)</span></label>
+            <select id="bird-father" class="form-control">
+              <option value="">— Sélectionner —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="bird-mother">Mère <span>(optionnel)</span></label>
+            <select id="bird-mother" class="form-control">
+              <option value="">— Sélectionner —</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="bird-status">Statut</label>
+            <select id="bird-status" class="form-control" onchange="toggleTransferFields()">
+              <option value="active">Actif</option>
+              <option value="sold">Vendu</option>
+              <option value="given">Donné</option>
+              <option value="deceased">Décédé</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="bird-public"> Visible sur ma vitrine publique
+            </label>
+          </div>
+        </div>
+
+        <!-- Informations de cession (affiché si vendu ou donné) -->
+        <div id="transfer-fields" style="display:none;background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);margin-bottom:1rem">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0">
+              <label for="bird-transfer-to">Nom acheteur / destinataire</label>
+              <input type="text" id="bird-transfer-to" class="form-control">
+            </div>
+            <div class="form-group" style="margin-bottom:0">
+              <label for="bird-transfer-date">Date de cession</label>
+              <input type="date" id="bird-transfer-date" class="form-control">
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:.75rem;margin-bottom:0">
+            <label for="bird-transfer-notes">Notes sur la cession</label>
+            <input type="text" id="bird-transfer-notes" class="form-control">
+          </div>
+        </div>
+
+        <!-- Photo -->
+        <div class="form-group">
+          <label>Photo</label>
+          <div class="photo-upload-area" id="photo-area" onclick="document.getElementById('bird-photo-input').click()">
+            <div id="photo-placeholder">📷 Cliquer pour ajouter une photo</div>
+            <img id="photo-preview" class="photo-preview" style="display:none" alt="Aperçu">
+          </div>
+          <input type="file" id="bird-photo-input" accept="image/*" style="display:none">
+        </div>
+
+        <div class="form-group">
+          <label for="bird-notes">Notes libres</label>
+          <textarea id="bird-notes" class="form-control" placeholder="Notes, observations..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('bird-modal')">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="bird-submit-btn">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale détail oiseau ─────────────────────────────────────────────── -->
+<div class="modal-overlay" id="bird-detail-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="detail-bird-name">Détail oiseau</h2>
+      <button class="modal-close" onclick="closeModal('bird-detail-modal')">×</button>
+    </div>
+    <div class="modal-body" id="bird-detail-body">
+      <!-- Rempli par JS -->
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+let allBirds = [];
+let currentPhotoBase64 = null;
+let viewMode = 'grid'; // 'grid' | 'table'
+
+(async () => {
+  const user = await requireLogin('/');
+  if (!user || user.role === 'admin') { window.location.href = '/'; return; }
+  renderSidebar(user);
+  await loadBirds();
+  setupFilters();
+})();
+
+async function loadBirds() {
+  try {
+    const data = await api('GET', '/api/birds');
+    allBirds = data.birds;
+    renderBirds(allBirds);
+    populateParentSelects(allBirds);
+  } catch (err) {
+    ToastManager.error('Erreur lors du chargement : ' + err.message);
+  }
+}
+
+function renderBirds(birds) {
+  const container = document.getElementById('birds-container');
+
+  if (!birds.length) {
+    container.innerHTML = `<div class="empty-state" style="margin:3rem auto">
+      <div class="empty-state-icon">🦜</div>
+      <p>Aucun oiseau ne correspond à vos critères.</p>
+      <button class="btn btn-primary" onclick="openAddBirdModal()">+ Ajouter mon premier oiseau</button>
+    </div>`;
+    return;
+  }
+
+  if (viewMode === 'grid') {
+    container.innerHTML = `<div class="birds-grid">${birds.map(birdCardHTML).join('')}</div>`;
+  } else {
+    container.innerHTML = `
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Oiseau</th><th>Sexe</th><th>Mutation</th><th>Naissance</th>
+              <th>Statut</th><th>Vitrine</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>${birds.map(birdRowHTML).join('')}</tbody>
+        </table>
+      </div>`;
+  }
+}
+
+function birdCardHTML(b) {
+  const photo = b.photo
+    ? `<img src="${b.photo}" alt="${b.name}">`
+    : `<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:3rem;background:var(--surface-2)">🦜</div>`;
+
+  return `
+    <div class="bird-card" onclick="showBirdDetail(${b.id})">
+      <div class="bird-card-photo">${photo}</div>
+      <div class="bird-card-body">
+        <div class="bird-card-name">${b.name}</div>
+        <div class="bird-card-info">
+          ${sexBadge(b.sex)} ${statusBadge(b.status)}
+        </div>
+        ${b.mutation ? `<div style="font-size:.8rem;color:var(--text-muted)">${b.mutation}</div>` : ''}
+        ${b.ring_number ? `<div style="font-size:.78rem;color:var(--text-light)">🔖 ${b.ring_number}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function birdRowHTML(b) {
+  return `
+    <tr>
+      <td style="display:flex;align-items:center;gap:.75rem">
+        ${birdPhotoHTML(b.photo, 36, b.name)}
+        <div>
+          <strong>${b.name}</strong>
+          ${b.ring_number ? `<div style="font-size:.75rem;color:var(--text-muted)">🔖 ${b.ring_number}</div>` : ''}
+        </div>
+      </td>
+      <td>${sexBadge(b.sex)}</td>
+      <td>${b.mutation || '—'}</td>
+      <td>${formatDate(b.birth_date)}</td>
+      <td>${statusBadge(b.status)}</td>
+      <td>${b.is_public ? '✅' : '—'}</td>
+      <td>
+        <div class="table-actions">
+          <button class="btn btn-ghost btn-sm" onclick="showBirdDetail(${b.id})">👁</button>
+          <button class="btn btn-ghost btn-sm" onclick="openEditBirdModal(${b.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteBird(${b.id}, '${b.name.replace(/'/g,"\\'")}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+}
+
+// ── Filtres ─────────────────────────────────────────────────────────────────
+function setupFilters() {
+  const inputs = ['filter-name','filter-sex','filter-status','filter-mutation'];
+  inputs.forEach(id => document.getElementById(id).addEventListener('input', applyFilters));
+  document.getElementById('btn-clear-filters').onclick = () => {
+    inputs.forEach(id => document.getElementById(id).value = '');
+    renderBirds(allBirds);
+  };
+  document.getElementById('btn-add-bird').onclick = openAddBirdModal;
+  document.getElementById('toggle-view').onclick = () => {
+    viewMode = viewMode === 'grid' ? 'table' : 'grid';
+    document.getElementById('toggle-view').textContent = viewMode === 'grid' ? '⊞ Grille' : '☰ Liste';
+    applyFilters();
+  };
+}
+
+function applyFilters() {
+  const name     = document.getElementById('filter-name').value.toLowerCase();
+  const sex      = document.getElementById('filter-sex').value;
+  const status   = document.getElementById('filter-status').value;
+  const mutation = document.getElementById('filter-mutation').value.toLowerCase();
+
+  const filtered = allBirds.filter(b => {
+    if (name     && !b.name.toLowerCase().includes(name))              return false;
+    if (sex      && b.sex !== sex)                                     return false;
+    if (status   && b.status !== status)                               return false;
+    if (mutation && !(b.mutation || '').toLowerCase().includes(mutation)) return false;
+    return true;
+  });
+  renderBirds(filtered);
+}
+
+// ── Modale ajout/édition ─────────────────────────────────────────────────────
+function openAddBirdModal() {
+  document.getElementById('bird-form').reset();
+  document.getElementById('bird-id').value = '';
+  document.getElementById('bird-modal-title').textContent = 'Ajouter un oiseau';
+  document.getElementById('bird-submit-btn').textContent = 'Enregistrer';
+  currentPhotoBase64 = null;
+  document.getElementById('photo-preview').style.display = 'none';
+  document.getElementById('photo-placeholder').style.display = '';
+  document.getElementById('photo-area').classList.remove('has-photo');
+  toggleTransferFields();
+  openModal('bird-modal');
+}
+
+async function openEditBirdModal(id) {
+  try {
+    const { bird } = await api('GET', `/api/birds/${id}`);
+    document.getElementById('bird-id').value        = bird.id;
+    document.getElementById('bird-name').value      = bird.name;
+    document.getElementById('bird-ring').value      = bird.ring_number || '';
+    document.getElementById('bird-sex').value       = bird.sex;
+    document.getElementById('bird-birth').value     = bird.birth_date || '';
+    document.getElementById('bird-mutation').value  = bird.mutation || '';
+    document.getElementById('bird-genetics').value  = bird.genetics || '';
+    document.getElementById('bird-father').value    = bird.father_id || '';
+    document.getElementById('bird-mother').value    = bird.mother_id || '';
+    document.getElementById('bird-status').value    = bird.status;
+    document.getElementById('bird-public').checked  = !!bird.is_public;
+    document.getElementById('bird-transfer-to').value    = bird.transfer_to || '';
+    document.getElementById('bird-transfer-date').value  = bird.transfer_date || '';
+    document.getElementById('bird-transfer-notes').value = bird.transfer_notes || '';
+    document.getElementById('bird-notes').value     = bird.notes || '';
+    currentPhotoBase64 = bird.photo || null;
+
+    if (bird.photo) {
+      document.getElementById('photo-preview').src = bird.photo;
+      document.getElementById('photo-preview').style.display = 'block';
+      document.getElementById('photo-placeholder').style.display = 'none';
+      document.getElementById('photo-area').classList.add('has-photo');
+    } else {
+      document.getElementById('photo-preview').style.display = 'none';
+      document.getElementById('photo-placeholder').style.display = '';
+      document.getElementById('photo-area').classList.remove('has-photo');
+    }
+
+    document.getElementById('bird-modal-title').textContent = 'Modifier l\'oiseau';
+    document.getElementById('bird-submit-btn').textContent = 'Enregistrer les modifications';
+    toggleTransferFields();
+    openModal('bird-modal');
+  } catch (err) {
+    ToastManager.error(err.message);
+  }
+}
+
+function toggleTransferFields() {
+  const status = document.getElementById('bird-status').value;
+  document.getElementById('transfer-fields').style.display = (status === 'sold' || status === 'given') ? '' : 'none';
+}
+
+// ── Upload photo ──────────────────────────────────────────────────────────────
+document.getElementById('bird-photo-input').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { ToastManager.warning('La photo ne doit pas dépasser 5 Mo.'); return; }
+  currentPhotoBase64 = await readFileAsBase64(file);
+  document.getElementById('photo-preview').src = currentPhotoBase64;
+  document.getElementById('photo-preview').style.display = 'block';
+  document.getElementById('photo-placeholder').style.display = 'none';
+  document.getElementById('photo-area').classList.add('has-photo');
+});
+
+// ── Soumission du formulaire ──────────────────────────────────────────────────
+document.getElementById('bird-form').onsubmit = async e => {
+  e.preventDefault();
+  const id     = document.getElementById('bird-id').value;
+  const status = document.getElementById('bird-status').value;
+
+  const payload = {
+    name:           document.getElementById('bird-name').value,
+    ring_number:    document.getElementById('bird-ring').value,
+    sex:            document.getElementById('bird-sex').value,
+    birth_date:     document.getElementById('bird-birth').value,
+    mutation:       document.getElementById('bird-mutation').value,
+    genetics:       document.getElementById('bird-genetics').value,
+    photo:          currentPhotoBase64,
+    father_id:      document.getElementById('bird-father').value || null,
+    mother_id:      document.getElementById('bird-mother').value || null,
+    status,
+    transfer_to:    document.getElementById('bird-transfer-to').value,
+    transfer_date:  document.getElementById('bird-transfer-date').value,
+    transfer_notes: document.getElementById('bird-transfer-notes').value,
+    is_public:      document.getElementById('bird-public').checked,
+    notes:          document.getElementById('bird-notes').value
+  };
+
+  try {
+    if (id) {
+      await api('PUT', `/api/birds/${id}`, payload);
+      ToastManager.success('Oiseau modifié avec succès.');
+    } else {
+      await api('POST', '/api/birds', payload);
+      ToastManager.success('Oiseau ajouté avec succès.');
+    }
+    closeModal('bird-modal');
+    await loadBirds();
+  } catch (err) {
+    ToastManager.error(err.message);
+  }
+};
+
+// ── Suppression ───────────────────────────────────────────────────────────────
+function deleteBird(id, name) {
+  confirmDialog(`Supprimer définitivement ${name} ? Cette action est irréversible.`, async () => {
+    try {
+      await api('DELETE', `/api/birds/${id}`);
+      ToastManager.success('Oiseau supprimé.');
+      await loadBirds();
+    } catch (err) {
+      ToastManager.error(err.message);
+    }
+  }, 'Supprimer un oiseau');
+}
+
+// ── Remplir les selects père/mère ─────────────────────────────────────────────
+function populateParentSelects(birds) {
+  const males   = birds.filter(b => b.sex === 'male');
+  const females = birds.filter(b => b.sex === 'female');
+  const all     = birds;
+
+  function opts(list) {
+    return list.map(b => `<option value="${b.id}">${b.name}${b.mutation ? ' — ' + b.mutation : ''}</option>`).join('');
+  }
+
+  document.getElementById('bird-father').innerHTML = '<option value="">— Sélectionner —</option>' + opts(males.length ? males : all);
+  document.getElementById('bird-mother').innerHTML = '<option value="">— Sélectionner —</option>' + opts(females.length ? females : all);
+}
+
+// ── Détail d'un oiseau ────────────────────────────────────────────────────────
+async function showBirdDetail(id) {
+  try {
+    const { bird, children } = await api('GET', `/api/birds/${id}`);
+    document.getElementById('detail-bird-name').textContent = bird.name;
+
+    const html = `
+      <div style="display:flex;gap:1.5rem;margin-bottom:1.5rem">
+        <div style="flex-shrink:0">
+          ${bird.photo
+            ? `<img src="${bird.photo}" style="width:120px;height:120px;border-radius:var(--radius-sm);object-fit:cover">`
+            : `<div style="width:120px;height:120px;background:var(--primary);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:3rem">🦜</div>`}
+        </div>
+        <div style="flex:1">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;font-size:.9rem">
+            <div><strong>Sexe</strong><br>${sexBadge(bird.sex)}</div>
+            <div><strong>Statut</strong><br>${statusBadge(bird.status)}</div>
+            <div><strong>Bague</strong><br>${bird.ring_number || '—'}</div>
+            <div><strong>Naissance</strong><br>${formatDate(bird.birth_date)}</div>
+            <div><strong>Mutation</strong><br>${bird.mutation || '—'}</div>
+            <div><strong>Génétique</strong><br>${bird.genetics || '—'}</div>
+            ${bird.father_id ? `<div><strong>Père</strong><br>${bird.father_name || '—'} <span style="color:var(--text-muted)">${bird.father_mutation || ''}</span></div>` : ''}
+            ${bird.mother_id ? `<div><strong>Mère</strong><br>${bird.mother_name || '—'} <span style="color:var(--text-muted)">${bird.mother_mutation || ''}</span></div>` : ''}
+          </div>
+        </div>
+      </div>
+      ${bird.notes ? `<div style="background:var(--surface-2);padding:1rem;border-radius:var(--radius-sm);margin-bottom:1rem"><strong>Notes :</strong><br>${bird.notes}</div>` : ''}
+      ${children.length ? `
+        <div>
+          <strong>Descendants (${children.length})</strong>
+          <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem">
+            ${children.map(c => `<span class="badge badge-active" style="cursor:pointer" onclick="closeModal('bird-detail-modal');showBirdDetail(${c.id})">${c.name}</span>`).join('')}
+          </div>
+        </div>` : ''}
+      <div class="form-actions">
+        <button class="btn btn-ghost" onclick="closeModal('bird-detail-modal')">Fermer</button>
+        <button class="btn btn-primary" onclick="closeModal('bird-detail-modal');openEditBirdModal(${bird.id})">✏️ Modifier</button>
+        <a href="/pedigree?id=${bird.id}" class="btn btn-outline">🌳 Voir le pedigree</a>
+      </div>`;
+
+    document.getElementById('bird-detail-body').innerHTML = html;
+    openModal('bird-detail-modal');
+  } catch (err) {
+    ToastManager.error(err.message);
+  }
+}
+</script>
+</body>
+</html>
