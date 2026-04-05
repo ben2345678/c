@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tableau de bord — BudgiBook</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-layout">
+  <!-- Sidebar injectée par JS -->
+
+  <div class="app-content">
+    <div class="app-topbar">
+      <h1 id="topbar-title">Tableau de bord</h1>
+    </div>
+
+    <div class="page-content">
+      <!-- Statistiques -->
+      <div class="grid-4" id="stats-grid" style="margin-bottom:2rem">
+        <div class="stat-card"><div class="stat-value" id="stat-birds">—</div><div class="stat-label">Oiseaux actifs</div></div>
+        <div class="stat-card accent"><div class="stat-value" id="stat-clutches">—</div><div class="stat-label">Nichées en cours</div></div>
+        <div class="stat-card success"><div class="stat-value" id="stat-pairings">—</div><div class="stat-label">Accouplements</div></div>
+        <div class="stat-card info"><div class="stat-value" id="stat-total">—</div><div class="stat-label">Total oiseaux</div></div>
+      </div>
+
+      <!-- Raccourcis -->
+      <div class="card" style="margin-bottom:2rem">
+        <div class="card-header"><h2>Raccourcis rapides</h2></div>
+        <div class="card-body" style="display:flex;gap:1rem;flex-wrap:wrap">
+          <a href="/mes-oiseaux" class="btn btn-primary">🦜 Ajouter un oiseau</a>
+          <a href="/accouplements" class="btn btn-accent">🥚 Nouveau couple</a>
+          <a href="/pedigree" class="btn btn-outline">🌳 Voir un pedigree</a>
+          <a href="/mon-profil" class="btn btn-ghost">🏡 Ma vitrine</a>
+        </div>
+      </div>
+
+      <!-- Derniers oiseaux -->
+      <div class="card">
+        <div class="card-header">
+          <h2>Derniers oiseaux ajoutés</h2>
+          <a href="/mes-oiseaux" class="btn btn-ghost btn-sm">Voir tous</a>
+        </div>
+        <div class="table-wrapper">
+          <table id="recent-birds-table">
+            <thead>
+              <tr>
+                <th>Oiseau</th>
+                <th>Sexe</th>
+                <th>Mutation</th>
+                <th>Statut</th>
+                <th>Ajouté le</th>
+              </tr>
+            </thead>
+            <tbody id="recent-birds-body">
+              <tr><td colspan="5" class="empty-state"><div class="empty-state-icon">🦜</div><p>Aucun oiseau enregistré.</p></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+(async () => {
+  const user = await requireLogin('/');
+  if (!user || user.role === 'admin') { window.location.href = user?.role === 'admin' ? '/admin' : '/'; return; }
+
+  renderSidebar(user);
+  document.getElementById('topbar-title').textContent = `Bonjour, ${user.farm_name || user.email} 👋`;
+
+  // Charger les statistiques
+  try {
+    const { birds } = await api('GET', '/api/birds');
+    const activeBirds = birds.filter(b => b.status === 'active').length;
+    document.getElementById('stat-birds').textContent = activeBirds;
+    document.getElementById('stat-total').textContent  = birds.length;
+
+    // Remplir le tableau des derniers oiseaux (5 plus récents)
+    const recent = birds.slice(0, 5);
+    const tbody = document.getElementById('recent-birds-body');
+    if (recent.length) {
+      tbody.innerHTML = recent.map(b => `
+        <tr>
+          <td style="display:flex;align-items:center;gap:.75rem">
+            ${birdPhotoHTML(b.photo, 36, b.name)}
+            <div>
+              <strong>${b.name}</strong>
+              ${b.ring_number ? `<div style="font-size:.78rem;color:var(--text-muted)">Bague : ${b.ring_number}</div>` : ''}
+            </div>
+          </td>
+          <td>${sexBadge(b.sex)}</td>
+          <td>${b.mutation || '—'}</td>
+          <td>${statusBadge(b.status)}</td>
+          <td>${formatDate(b.created_at)}</td>
+        </tr>
+      `).join('');
+    }
+  } catch (err) {
+    ToastManager.error('Erreur lors du chargement : ' + err.message);
+  }
+
+  try {
+    const { clutches } = await api('GET', '/api/pairings/all-clutches');
+    document.getElementById('stat-clutches').textContent = clutches.filter(c => c.status === 'ongoing').length;
+  } catch {}
+
+  try {
+    const { pairings } = await api('GET', '/api/pairings');
+    document.getElementById('stat-pairings').textContent = pairings.length;
+  } catch {}
+})();
+</script>
+</body>
+</html>

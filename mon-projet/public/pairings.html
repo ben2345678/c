@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accouplements & Nichées — BudgiBook</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-layout">
+
+  <div class="app-content">
+    <div class="app-topbar">
+      <h1>🥚 Accouplements & Nichées</h1>
+      <button class="btn btn-primary" style="margin-left:auto" id="btn-add-pairing">+ Nouveau couple</button>
+    </div>
+
+    <div class="page-content" id="pairings-content">
+      <!-- Rempli par JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale ajout couple ───────────────────────────────────────────────── -->
+<div class="modal-overlay" id="pairing-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Créer un couple</h2>
+      <button class="modal-close" onclick="closeModal('pairing-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="pairing-form">
+        <div class="form-group">
+          <label for="pair-male">♂ Mâle *</label>
+          <select id="pair-male" class="form-control" required>
+            <option value="">— Sélectionner un mâle —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pair-female">♀ Femelle *</label>
+          <select id="pair-female" class="form-control" required>
+            <option value="">— Sélectionner une femelle —</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="pair-notes">Notes</label>
+          <textarea id="pair-notes" class="form-control" placeholder="Notes sur ce couple..."></textarea>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('pairing-modal')">Annuler</button>
+          <button type="submit" class="btn btn-primary">Créer le couple</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modale ajout/édition nichée ──────────────────────────────────────── -->
+<div class="modal-overlay" id="clutch-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="clutch-modal-title">Ajouter une nichée</h2>
+      <button class="modal-close" onclick="closeModal('clutch-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="clutch-form">
+        <input type="hidden" id="clutch-id">
+        <input type="hidden" id="clutch-pairing-id">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clutch-nest-date">Mise en nid</label>
+            <input type="date" id="clutch-nest-date" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="clutch-laying-date">Première ponte</label>
+            <input type="date" id="clutch-laying-date" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clutch-eggs">Nombre d'œufs</label>
+            <input type="number" id="clutch-eggs" class="form-control" min="0" value="0">
+          </div>
+          <div class="form-group">
+            <label for="clutch-hatched">Nombre éclos</label>
+            <input type="number" id="clutch-hatched" class="form-control" min="0" value="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="clutch-fledge">Date d'envol</label>
+            <input type="date" id="clutch-fledge" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="clutch-status">Statut</label>
+            <select id="clutch-status" class="form-control">
+              <option value="ongoing">En cours</option>
+              <option value="finished">Terminée</option>
+              <option value="abandoned">Abandonnée</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="clutch-notes">Notes</label>
+          <textarea id="clutch-notes" class="form-control" placeholder="Observations, incidents..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" onclick="closeModal('clutch-modal')">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+<script src="/js/sidebar.js"></script>
+<script>
+let allBirds = [];
+
+(async () => {
+  const user = await requireLogin('/');
+  if (!user || user.role === 'admin') { window.location.href = '/'; return; }
+  renderSidebar(user);
+
+  // Charger les oiseaux pour les selects
+  try {
+    const data = await api('GET', '/api/birds');
+    allBirds = data.birds;
+    populateBirdSelects();
+  } catch {}
+
+  await loadPairings();
+  document.getElementById('btn-add-pairing').onclick = () => openModal('pairing-modal');
+})();
+
+async function loadPairings() {
+  try {
+    const { pairings } = await api('GET', '/api/pairings');
+    const container = document.getElementById('pairings-content');
+
+    if (!pairings.length) {
+      container.innerHTML = `<div class="empty-state">
+        <div class="empty-state-icon">🥚</div>
+        <p>Aucun couple créé.</p>
+        <button class="btn btn-primary" onclick="openModal('pairing-modal')">+ Créer mon premier couple</button>
+      </div>`;
+      return;
+    }
+
+    container.innerHTML = pairings.map(p => pairingCardHTML(p)).join('');
+
+    // Charger les nichées de chaque couple
+    pairings.forEach(async p => {
+      try {
+        const { clutches } = await api('GET', `/api/pairings/${p.id}/clutches`);
+        renderClutches(p.id, clutches);
+      } catch {}
+    });
+  } catch (err) {
+    ToastManager.error(err.message);
+  }
+}
+
+function pairingCardHTML(p) {
+  return `
+    <div class="card" style="margin-bottom:1.5rem" id="pairing-${p.id}">
+      <div class="card-header">
+        <div>
+          <h2 style="display:flex;align-items:center;gap:.75rem">
+            <span style="color:#1565c0">♂ ${p.male_name}</span>
+            <span style="color:var(--text-muted);font-weight:400">×</span>
+            <span style="color:#c62828">♀ ${p.female_name}</span>
+          </h2>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-top:.25rem">
+            ${p.male_mutation ? `Mâle : ${p.male_mutation}` : ''}
+            ${p.male_mutation && p.female_mutation ? ' · ' : ''}
+            ${p.female_mutation ? `Femelle : ${p.female_mutation}` : ''}
+            · ${p.clutch_count} nichée(s)
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-accent btn-sm" onclick="openAddClutch(${p.id})">+ Nichée</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePairing(${p.id})">🗑</button>
+        </div>
+      </div>
+      <div class="card-body" id="clutches-${p.id}">
+        <div style="color:var(--text-muted);font-size:.9rem">Chargement des nichées...</div>
+      </div>
+    </div>`;
+}
+
+function renderClutches(pairingId, clutches) {
+  const container = document.getElementById(`clutches-${pairingId}`);
+  if (!container) return;
+
+  if (!clutches.length) {
+    container.innerHTML = `<p style="color:var(--text-muted);font-size:.9rem">Aucune nichée enregistrée.</p>`;
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Mise en nid</th><th>Ponte</th><th>Œufs</th><th>Éclos</th>
+            <th>Envol</th><th>Statut</th><th>Notes</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${clutches.map(c => `
+            <tr>
+              <td>${formatDate(c.nest_date)}</td>
+              <td>${formatDate(c.laying_date)}</td>
+              <td style="text-align:center">${c.eggs_count}</td>
+              <td style="text-align:center">${c.hatched_count}</td>
+              <td>${formatDate(c.fledge_date)}</td>
+              <td>${clutchStatusBadge(c.status)}</td>
+              <td style="max-width:180px;font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.notes || '—'}</td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-ghost btn-sm" onclick="openEditClutch(${pairingId}, ${c.id})">✏️</button>
+                  <button class="btn btn-danger btn-sm" onclick="deleteClutch(${c.id})">🗑</button>
+                </div>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ── Selects oiseaux ──────────────────────────────────────────────────────────
+function populateBirdSelects() {
+  const males   = allBirds.filter(b => b.sex === 'male'   && b.status === 'active');
+  const females = allBirds.filter(b => b.sex === 'female' && b.status === 'active');
+
+  const maleOpts   = males.map(b   => `<option value="${b.id}">${b.name}${b.mutation ? ' — ' + b.mutation : ''}</option>`).join('');
+  const femaleOpts = females.map(b => `<option value="${b.id}">${b.name}${b.mutation ? ' — ' + b.mutation : ''}</option>`).join('');
+
+  document.getElementById('pair-male').innerHTML   = '<option value="">— Sélectionner un mâle —</option>'   + maleOpts;
+  document.getElementById('pair-female').innerHTML = '<option value="">— Sélectionner une femelle —</option>' + femaleOpts;
+}
+
+// ── Créer un couple ──────────────────────────────────────────────────────────
+document.getElementById('pairing-form').onsubmit = async e => {
+  e.preventDefault();
+  try {
+    await api('POST', '/api/pairings', {
+      male_id:   document.getElementById('pair-male').value,
+      female_id: document.getElementById('pair-female').value,
+      notes:     document.getElementById('pair-notes').value
+    });
+    ToastManager.success('Couple créé.');
+    closeModal('pairing-modal');
+    document.getElementById('pairing-form').reset();
+    await loadPairings();
+  } catch (err) {
+    ToastManager.error(err.message);
+  }
+};
+
+// ── Supprimer un couple ──────────────────────────────────────────────────────
+function deletePairing(id) {
+  confirmDialog('Supprimer ce couple et toutes ses nichées ?', async () => {
+    try {
+      await api('DELETE', `/api/pairings/${id}`);
+      ToastManager.success('Couple supprimé.');
+      await loadPairings();
+    } catch (err) {
+      ToastManager.error(err.message);
+    }
+  });
+}
+
+// ── Nichées ──────────────────────────────────────────────────────────────────
+function openAddClutch(pairingId) {
+  document.getElementById('clutch-form').reset();
+  document.getElementById('clutch-id').value = '';
+  document.getElementById('clutch-pairing-id').value = pairingId;
+  document.getElementById('clutch-modal-title').textContent = 'Ajouter une nichée';
+  openModal('clutch-modal');
+}
+
+async function openEditClutch(pairingId, clutchId) {
+  try {
+    const { clutches } = await api('GET', `/api/pairings/${pairingId}/clutches`);
+    const c = clutches.find(x => x.id === clutchId);
+    if (!c) return;
+
+    document.getElementById('clutch-id').value           = c.id;
+    document.getElementById('clutch-pairing-id').value   = pairingId;
+    document.getElementById('clutch-nest-date').value    = c.nest_date || '';
+    document.getElementById('clutch-laying-date').value  = c.laying_date || '';
+    document.getElementById('clutch-eggs').value         = c.eggs_count;
+    document.getElementById('clutch-hatched').value      = c.hatched_count;
+    document.getElementById('clutch-fledge').value       = c.fledge_date || '';
+    document.getElementById('clutch-status').value       = c.status;
+    document.getElementById('clutch-notes').value        = c.notes || '';
+    document.getElementById('clutch-modal-title').textContent = 'Modifier la nichée';
+    openModal('clutch-modal');
+  } catch (err) {
+    ToastManager.error(err.message);
+  }
+}
+
+document.getElementById('clutch-form').onsubmit = async e => {
+  e.preventDefault();
+  const id        = document.getElementById('clutch-id').value;
+  const pairingId = document.getElementById('clutch-pairing-id').value;
+  const payload   = {
+    nest_date:    document.getElementById('clutch-nest-date').value,
+    laying_date:  document.getElementById('clutch-laying-date').value,
+    eggs_count:   parseInt(document.getElementById('clutch-eggs').value) || 0,
+    hatched_count:parseInt(document.getElementById('clutch-hatched').value) || 0,
+    fledge_date:  document.getElementById('clutch-fledge').value,
+    status:       document.getElementById('clutch-status').value,
+    notes:        document.getElementById('clutch-notes').value
+  };
+
+  try {
+    if (id) {
+      await api('PUT', `/api/pairings/clutches/${id}`, payload);
+      ToastManager.success('Nichée modifiée.');
+    } else {
+      await api('POST', `/api/pairings/${pairingId}/clutches`, payload);
+      ToastManager.success('Nichée ajoutée.');
+    }
+    closeModal('clutch-modal');
+    // Recharger uniquement les nichées de ce couple
+    const { clutches } = await api('GET', `/api/pairings/${pairingId}/clutches`);
+    renderClutches(pairingId, clutches);
+  } catch (err) {
+    ToastManager.error(err.message);
+  }
+};
+
+function deleteClutch(id) {
+  confirmDialog('Supprimer cette nichée définitivement ?', async () => {
+    try {
+      await api('DELETE', `/api/pairings/clutches/${id}`);
+      ToastManager.success('Nichée supprimée.');
+      await loadPairings();
+    } catch (err) {
+      ToastManager.error(err.message);
+    }
+  });
+}
+</script>
+</body>
+</html>
