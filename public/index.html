@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BudgiBook Local</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div id="app">
+
+    <!-- ── Sidebar ─────────────────────────────────────────── -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo-wrap">
+          <img id="sidebar-logo" src="" alt="" class="sidebar-logo hidden">
+          <div class="sidebar-logo-placeholder" id="sidebar-logo-placeholder">🐦</div>
+        </div>
+        <div class="sidebar-titles">
+          <span class="app-name">BudgiBook</span>
+          <span class="farm-name" id="sidebar-farm-name">Mon Élevage</span>
+        </div>
+      </div>
+
+      <nav id="nav">
+        <a href="#dashboard" class="nav-item" data-route="dashboard">
+          <span class="nav-icon">📊</span> Tableau de bord
+        </a>
+        <a href="#oiseaux" class="nav-item" data-route="oiseaux">
+          <span class="nav-icon">🐦</span> Mes Oiseaux
+        </a>
+        <a href="#nichees" class="nav-item" data-route="nichees">
+          <span class="nav-icon">🥚</span> Nichées
+        </a>
+        <a href="#pedigree" class="nav-item" data-route="pedigree">
+          <span class="nav-icon">🌳</span> Pedigree
+        </a>
+        <a href="#elevage" class="nav-item" data-route="elevage">
+          <span class="nav-icon">⚙️</span> Mon Élevage
+        </a>
+        <a href="#backup" class="nav-item" data-route="backup">
+          <span class="nav-icon">💾</span> Sauvegarde
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">v1.0.0</div>
+    </aside>
+
+    <!-- ── Main content ────────────────────────────────────── -->
+    <main id="content">
+      <div class="loading-screen">
+        <div class="spinner"></div>
+        <p>Chargement…</p>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ── Modal ──────────────────────────────────────────────── -->
+  <div id="modal-overlay" class="hidden" onclick="App.closeModal(event)">
+    <div id="modal" role="dialog" aria-modal="true">
+      <div class="modal-header">
+        <h2 id="modal-title"></h2>
+        <button class="modal-close" onclick="App.closeModal()">&times;</button>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- ── Toast ──────────────────────────────────────────────── -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <!-- ── Scripts ────────────────────────────────────────────── -->
+  <script src="/js/app.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/oiseaux.js"></script>
+  <script src="/js/nichees.js"></script>
+  <script src="/js/pedigree.js"></script>
+  <script src="/js/elevage.js"></script>
+</body>
+</html>
