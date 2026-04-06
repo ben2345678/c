@@ -1,5 +1,7 @@
 node_modules/
 budgibook.db
+budgibook.db-shm
+budgibook.db-wal
 uploads/oiseaux/*
 uploads/elevage/*
 !uploads/oiseaux/.gitkeep
